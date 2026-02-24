@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Information</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+        .nav-link i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+        .info-container {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--secondary-color);
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .product-item {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+        .product-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .product-item h3 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        .template-box {
+            background: #e9ecef;
+            padding: 1rem;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #dee2e6;
+            margin: 1rem 0;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .sidebar .nav {
+                flex-direction: row;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .sidebar .nav-item {
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h4 class="mb-4 d-flex align-items-center">
+            <i class="bi bi-book me-2"></i>
+            <span id="industryName">Sales Playbook</span>
+        </h4>
+        <div class="text-center mb-4">
+            <div class="user-avatar mx-auto mb-2" id="sidebarUserAvatar"></div>
+            <div id="userName" class="text-white"></div>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-content="productInfo">
+                    <i class="bi bi-info-circle"></i> Product Information
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-content="painPoints">
+                    <i class="bi bi-exclamation-triangle"></i> Pain Points
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-content="benefits">
+                    <i class="bi bi-star"></i> Key Benefits
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-content="strategies">
+                    <i class="bi bi-linkedin"></i> LinkedIn Strategy
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-content="objectionStrategies">
+                    <i class="bi bi-exclamation-octagon"></i> Objection Handling
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <a class="nav-link" href="select-industry.html">
+                    <i class="bi bi-arrow-left"></i> Change Industry
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 id="contentTitle">Product Information</h1>
+        </div>
+
+        <div class="info-container">
+            <div id="contentArea">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading content...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        // Authentication and user setup
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const industryId = localStorage.getItem('selectedIndustryId');
+        const industryName = localStorage.getItem('selectedIndustryName');
+
+        if (!token || !user || user.role !== 'sales_rep' || !industryId || !industryName) {
+            console.error('Authentication failed: Missing token, user, role, industryId, or industryName. Redirecting to login.');
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('sidebarUserAvatar').textContent = user.name.charAt(0).toUpperCase();
+            document.getElementById('industryName').textContent = industryName || 'Sales Playbook';
+
+            let products = [];
+            let callStrategies = [];
+            let objectionStrategies = [];
+            let currentContent = 'productInfo';
+
+            async function loadData() {
+                document.getElementById('contentArea').innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading content...</p>
+                    </div>
+                `;
+                try {
+                    const headers = {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    };
+
+                    const fetches = [
+                        fetch(`${API_BASE_URL}/products?industryId=${industryId}`, { headers })
+                            .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Products: ${response.status} - ${text}`); })),
+                        fetch(`${API_BASE_URL}/call-strategies?industryId=${industryId}`, { headers })
+                            .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Call Strategies: ${response.status} - ${text}`); })),
+                        fetch(`${API_BASE_URL}/objection-strategies?industryId=${industryId}`, { headers })
+                            .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Objection Strategies: ${response.status} - ${text}`); }))
+                    ];
+
+                    const [productsData, callStrategiesData, objectionStrategiesData] = await Promise.allSettled(fetches);
+
+                    // Filter and assign results, ensuring data pertains only to the selected industryId
+                    const selectedIndustryId = String(industryId); // Ensure consistent type for comparison
+
+                    if (productsData.status === 'fulfilled') {
+                        products = productsData.value.filter(product => {
+                            const match = String(product.industry_id) === selectedIndustryId;
+                            // console.log(`Product (info page): id=${product.id}, industry_id=${product.industry_id} (type: ${typeof product.industry_id}), selectedIndustryId=${selectedIndustryId} (type: ${typeof selectedIndustryId}), Match: ${match}`);
+                            return match;
+                        });
+                    } else {
+                        console.error('Error fetching products:', productsData.reason);
+                        products = [];
+                    }
+
+                    if (callStrategiesData.status === 'fulfilled') {
+                        callStrategies = callStrategiesData.value.filter(strategy => {
+                            const match = String(strategy.industry_id) === selectedIndustryId;
+                            // console.log(`Call Strategy (info page): id=${strategy.id}, industry_id=${strategy.industry_id} (type: ${typeof strategy.industry_id}), selectedIndustryId=${selectedIndustryId} (type: ${typeof selectedIndustryId}), Match: ${match}`);
+                            return match;
+                        });
+                    } else {
+                        console.error('Error fetching call strategies:', callStrategiesData.reason);
+                        callStrategies = [];
+                    }
+
+                    if (objectionStrategiesData.status === 'fulfilled') {
+                        objectionStrategies = objectionStrategiesData.value.filter(strategy => {
+                            const match = String(strategy.industry_id) === selectedIndustryId;
+                            // console.log(`Objection Strategy (info page): id=${strategy.id}, industry_id=${strategy.industry_id} (type: ${typeof strategy.industry_id}), selectedIndustryId=${selectedIndustryId} (type: ${typeof selectedIndustryId}), Match: ${match}`);
+                            return match;
+                        });
+                    } else {
+                        console.error('Error fetching objection strategies:', objectionStrategiesData.reason);
+                        objectionStrategies = [];
+                    }
+
+                    console.log('Products (filtered, info page):', products);
+                    console.log('Call Strategies (filtered, info page):', callStrategies);
+                    console.log('Objection Strategies (filtered, info page):', objectionStrategies);
+
+                    renderContent();
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    document.getElementById('contentArea').innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load data: ${error.message}. Please check your network connection and API server.
+                        </div>
+                    `;
+                }
+            }
+            
+            function renderContent() {
+                let content = '';
+                
+                switch(currentContent) {
+                    case 'productInfo':
+                        if (products.length === 0) {
+                            content = `<div class="alert alert-info">No products available for ${industryName}.</div>`;
+                        } else {
+                            content = products.map(product => `
+                                <div class="product-item">
+                                    <h3>${product.name || 'Unnamed Product'}</h3>
+                                    <div class="mt-3">${product.product_info || 'No information available'}</div>
+                                </div>
+                            `).join('');
+                        }
+                        document.getElementById('contentTitle').textContent = 'Product Information';
+                        break;
+                        
+                    case 'painPoints':
+                        if (products.length === 0) {
+                            content = `<div class="alert alert-info">No products available for ${industryName}.</div>`;
+                        } else {
+                            content = products.map(product => `
+                                <div class="product-item">
+                                    <h3>${product.name || 'Unnamed Product'}</h3>
+                                    <div class="mt-3">${product.pain_points || 'No pain points defined'}</div>
+                                </div>
+                            `).join('');
+                        }
+                        document.getElementById('contentTitle').textContent = 'Pain Points Addressed';
+                        break;
+                        
+                    case 'benefits':
+                        if (products.length === 0) {
+                            content = `<div class="alert alert-info">No products available for ${industryName}.</div>`;
+                        } else {
+                            content = products.map(product => `
+                                <div class="product-item">
+                                    <h3>${product.name || 'Unnamed Product'}</h3>
+                                    <div class="mt-3">${product.benefits || 'No benefits defined'}</div>
+                                </div>
+                            `).join('');
+                        }
+                        document.getElementById('contentTitle').textContent = 'Key Benefits';
+                        break;
+                        
+                    case 'strategies': // Used for LinkedIn Strategy here
+                        if (callStrategies.length === 0) {
+                            content = `<div class="alert alert-info">No LinkedIn strategies found for ${industryName}.</div>`;
+                        } else {
+                            content = callStrategies.map(strategy => `
+                                <div class="product-item">
+                                    <h3>LinkedIn Strategy</h3>
+                                    <div class="mt-3 template-box">${strategy.call_strategy || 'No LinkedIn strategy defined. This content might be shared with call strategies if no specific LinkedIn field is present.'}</div>
+                                </div>
+                            `).join('');
+                        }
+                        document.getElementById('contentTitle').textContent = 'LinkedIn Strategy';
+                        break;
+                        
+                    case 'objectionStrategies':
+                        // This is the problematic section
+                        if (objectionStrategies.length === 0) {
+                            console.warn(`No objection strategies found for ${industryName}. (Array is empty after filter on info page)`);
+                            content = `<div class="alert alert-info">No objection handling strategies found for ${industryName}. Please contact support at support@example.com to request strategies for this industry.</div>`;
+                        } else {
+                            content = objectionStrategies.map(strategy => `
+                                <div class="product-item">
+                                    <h3>Objection Handling</h3>
+                                    <div class="mt-3 template-box">${strategy.objection_strategy || 'No objection strategy defined'}</div>
+                                </div>
+                            `).join('');
+                        }
+                        document.getElementById('contentTitle').textContent = 'Objection Strategies';
+                        break;
+                        
+                    default:
+                        content = '<div class="alert alert-warning">Content not available</div>';
+                }
+                
+                document.getElementById('contentArea').innerHTML = content;
+            }
+            
+            // Event listeners for navigation links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    currentContent = this.dataset.content;
+                    renderContent();
+                });
+            });
+            
+            // Initial load of data
+            loadData();
+        }
+    </script>
+</body>
+</html>

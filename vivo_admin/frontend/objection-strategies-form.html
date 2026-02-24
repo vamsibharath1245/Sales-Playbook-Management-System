@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Objection Strategy Form - Sales Playbook</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"/>
+  <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+  <style>
+    :root {
+      --sidebar-width: 250px;
+      --primary-color: #3f51b5;
+      --objection-color: #3f51b5;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      width: var(--sidebar-width);
+      height: 100vh;
+      position: fixed;
+      background-color: #2c3e50;
+      color: white;
+      padding: 1rem;
+    }
+    
+.nav-link {
+    color: white !important;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white !important; }
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    color: white !important;
+}
+
+
+.nav-link .bi {
+    color: white !important;
+}
+
+
+
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding: 2rem;
+    }
+    .page-title {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+    .form-container {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    .ck-editor__editable {
+      min-height: 250px;
+      border: 1px solid #ced4da !important;
+      border-radius: 4px;
+    }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+    .objection-bg {
+      background-color: var(--objection-color);
+      color: white;
+    }
+    .objection-bg:hover {
+      background-color: #7B1FA2;
+    }
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1100;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h4 class="mb-4"><i class="bi bi-book me-2"></i> Sales Playbook</h4>
+   <ul class="nav flex-column" id="dynamicSidebar">
+            <!-- Dynamic menu items will be loaded here -->
+        </ul>
+  </div>
+
+  <div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="page-title" id="formTitle">Add New Objection Strategy</h1>
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown">
+          <div class="user-avatar me-2" id="userAvatar"></div>
+          <span id="userName"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="form-container">
+      <form id="strategyForm" novalidate>
+        <input type="hidden" id="strategyId">
+        <div class="mb-4">
+          <label for="industrySelect" class="form-label">Industry *</label>
+          <select class="form-select" id="industrySelect" required>
+            <option value="">Select Industry</option>
+          </select>
+          <div class="invalid-feedback">Please select an industry</div>
+        </div>
+        <div class="mb-4">
+          <label for="editor" class="form-label">Strategy Content *</label>
+          <div id="editor"></div>
+          <div class="invalid-feedback" id="editorError">Please provide strategy content</div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 pt-3">
+          <a href="objection-strategies.html" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn objection-bg" id="saveButton">
+            <span id="saveButtonText">Save Strategy</span>
+            <span id="saveSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-container">
+    <div class="toast text-white bg-success" id="successToast">
+      <div class="d-flex">
+        <div class="toast-body" id="successToastMessage"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+    <div class="toast text-white bg-danger" id="errorToast">
+      <div class="d-flex">
+        <div class="toast-body" id="errorToastMessage"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !user || user.role !== 'admin') {
+      window.location.href = 'login.html';
+    } else {
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userAvatar').textContent = user.name.charAt(0);
+    }
+
+    const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+
+    function showToast(message, isSuccess = true) {
+      if (isSuccess) {
+        document.getElementById('successToastMessage').textContent = message;
+        successToast.show();
+      } else {
+        document.getElementById('errorToastMessage').textContent = message;
+        errorToast.show();
+      }
+    }
+
+    let strategyEditor;
+    ClassicEditor
+      .create(document.getElementById('editor'))
+      .then(editor => {
+        strategyEditor = editor;
+        loadData();
+      })
+      .catch(error => console.error('CKEditor Error:', error));
+
+    async function loadData() {
+      try {
+        const res = await fetch('http://localhost:3000/api/industries', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const dropdown = document.getElementById('industrySelect');
+        dropdown.innerHTML = '<option value="">Select Industry</option>';
+        data.forEach(ind => {
+          const opt = document.createElement('option');
+          opt.value = ind.industry_id;
+          opt.textContent = ind.industry_name;
+          dropdown.appendChild(opt);
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        if (id) {
+          document.getElementById('formTitle').textContent = 'Edit Objection Strategy';
+          document.getElementById('saveButtonText').textContent = 'Update Strategy';
+          const stratRes = await fetch(`http://localhost:3000/api/objection-strategies/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const strategy = await stratRes.json();
+          document.getElementById('strategyId').value = strategy.strategy_id;
+          document.getElementById('industrySelect').value = strategy.industry_id;
+          strategyEditor.setData(strategy.objection_strategy);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to load data', false);
+      }
+    }
+
+    document.getElementById('strategyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const industry = document.getElementById('industrySelect').value;
+      const strategyContent = strategyEditor.getData();
+      const editorError = document.getElementById('editorError');
+
+      if (!industry || !strategyContent.trim()) {
+        document.getElementById('industrySelect').classList.toggle('is-invalid', !industry);
+        editorError.style.display = strategyContent.trim() ? 'none' : 'block';
+        showToast('Please fill in all required fields', false);
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveButton');
+      const saveText = document.getElementById('saveButtonText');
+      const spinner = document.getElementById('saveSpinner');
+      saveText.textContent = 'Saving...';
+      spinner.classList.remove('d-none');
+      saveBtn.disabled = true;
+
+      const strategyId = document.getElementById('strategyId').value;
+      const payload = {
+        industry_id: industry,
+        objection_strategy: strategyContent
+      };
+
+      try {
+        const res = await fetch(strategyId
+          ? `http://localhost:3000/api/objection-strategies/${strategyId}`
+          : 'http://localhost:3000/api/objection-strategies', {
+            method: strategyId ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+        if (res.ok) {
+          showToast('Objection strategy saved successfully');
+          setTimeout(() => window.location.href = 'objection-strategies.html', 1000);
+        } else {
+          const err = await res.json();
+          throw new Error(err.message || 'Failed to save');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Failed to save strategy', false);
+        saveText.textContent = strategyId ? 'Update Strategy' : 'Save Strategy';
+        spinner.classList.add('d-none');
+        saveBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.clear();
+      window.location.href = 'login.html';
+    });
+     // Load sidebar menu
+        async function loadSidebarMenu() {
+            try {
+                const response = await fetch('http://localhost:3000/api/menu', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const menuItems = await response.json();
+                    renderSidebarMenu(menuItems);
+                }
+            } catch (error) {
+                console.error('Error loading sidebar menu:', error);
+            }
+        }
+        
+        // Render sidebar menu
+        function renderSidebarMenu(menuItems) {
+            const sidebar = document.getElementById('dynamicSidebar');
+            sidebar.innerHTML = '';
+            
+            // Get current page to set active state
+            const currentPage = window.location.pathname.split('/').pop();
+            
+            menuItems.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'nav-item';
+                
+                const a = document.createElement('a');
+                a.className = `nav-link ${currentPage === item.url ? 'active' : ''}`;
+                a.href = item.url;
+                a.innerHTML = `<i class="bi bi-${item.icon} me-2"></i> ${item.name}`;
+                
+                li.appendChild(a);
+                sidebar.appendChild(li);
+            });
+        }
+        
+        // [Rest of your existing code: loadData(), renderTable(), etc.]
+        
+        // Initial load
+        Promise.all([loadData(), loadSidebarMenu()])
+            .catch(error => {
+                console.error('Initialization error:', error);
+            });
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Objection Strategies Management - Sales Playbook</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --primary-color: #3f51b5; /* This is a blue, typically used for primary actions/branding */
+            --call-color: #3f51b5; /* This is also a blue, might be the specific primary button color you want */
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            background-color: #2c3e50; /* Dark grey/blue for sidebar background */
+            color: white;
+            padding: 1rem;
+        }
+        
+        .nav-link {
+            color: white !important; /* Ensure text color is white */
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white !important; /* Ensure text color stays white on hover */
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+            color: white !important; /* Ensure text color is white when active */
+        }
+
+        .nav-link .bi {
+            color: white !important; /* Ensure icon color is white */
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+        }
+        .page-title {
+            color: var(--primary-color);
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+        .action-buttons .btn {
+            padding: 0.25rem 0.5rem;
+            margin-right: 0.25rem;
+        }
+        .btn-primary {
+            background-color: var(--call-color); /* Uses --call-color for primary buttons */
+            border-color: var(--call-color);
+        }
+        .search-filter {
+            margin-bottom: 1.5rem;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .loading-spinner {
+            display: none; /* Hidden by default */
+            width: 3rem;
+            height: 3rem;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h4 class="mb-4 d-flex align-items-center">
+            <i class="bi bi-book me-2"></i>
+            <span>Sales Playbook</span>
+        </h4>
+        <ul class="nav flex-column" id="dynamicSidebar">
+            </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="page-title">Objection Strategies Management</h1>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                    <div class="user-avatar me-2" id="userAvatar"></div>
+                    <span id="userName"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="search-filter mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search objection strategies...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton"><i class="bi bi-search"></i></button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary" id="addStrategiesBtn" onclick="window.location.href='objection-strategies-form.html'">
+                        <i class="bi bi-plus-circle"></i> Add Strategy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="d-flex justify-content-center mb-3">
+                <div class="spinner-border loading-spinner text-primary" role="status" id="loadingSpinner">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Industry</th>
+                            <th>Strategy Text</th> <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="strategiesTableBody">
+                        <tr><td colspan="4" class="text-center">Loading objection strategies...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="toast-container">
+        <div class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive" aria-atomic="true" id="successToast">
+            <div class="d-flex">
+                <div class="toast-body" id="successToastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="toast align-items-center text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true" id="errorToast">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize toast
+        const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+        const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+        
+        function showToast(message, isSuccess = true) {
+            if (isSuccess) {
+                document.getElementById('successToastMessage').textContent = message;
+                successToast.show();
+            } else {
+                document.getElementById('errorToastMessage').textContent = message;
+                errorToast.show();
+            }
+        }
+
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || !user || user.role !== 'admin') {
+            window.location.href = 'login.html';
+        } else {
+            // Display user info
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userAvatar').textContent = user.name.charAt(0);
+
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            let allObjectionStrategies = [];
+
+            // Load data function
+            async function loadData() {
+                try {
+                    document.getElementById('loadingSpinner').style.display = 'block';
+                    document.getElementById('strategiesTableBody').innerHTML = `
+                        <tr><td colspan="4" class="text-center">Loading objection strategies...</td></tr>
+                    `;
+
+                    // The backend API should now correctly return `industry_name` due to the JOIN in the query
+                    const response = await fetch('http://localhost:3000/api/objection-strategies', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        allObjectionStrategies = await response.json();
+                        renderTable();
+                        
+                    } else {
+                        const error = await response.json();
+                        throw new Error(error.error || "Failed to fetch objection strategies"); // Use error.error from backend
+                    }
+                } catch (error) {
+                    console.error(error);
+                    document.getElementById('strategiesTableBody').innerHTML = `
+                        <tr><td colspan="4" class="text-center text-danger">${error.message || 'Failed to load data'}</td></tr>
+                    `;
+                    showToast(error.message || 'Failed to load objection strategies', false);
+                } finally {
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                }
+            }
+
+            // Render table function
+            function renderTable(data = allObjectionStrategies) {
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const paginatedData = data.slice(start, end);
+                const tbody = document.getElementById('strategiesTableBody');
+
+                if (paginatedData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center">No objection strategies found.</td></tr>`;
+                    renderPagination(0);
+                    return;
+                }
+
+                tbody.innerHTML = paginatedData.map(strategy => `
+                    <tr>
+                        <td>${strategy.strategy_id}</td>
+                        <td>${strategy.industry_name || 'N/A'}</td>
+                        <td>${strategy.objection_strategy ? strategy.objection_strategy.substring(0, 100) + (strategy.objection_strategy.length > 100 ? '...' : '') : 'N/A'}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-primary" onclick="window.location.href='objection-strategies-form.html?id=${strategy.strategy_id}'">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-strategy" data-id="${strategy.strategy_id}">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-strategy').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteStrategy(btn.dataset.id);
+                    });
+                });
+
+                renderPagination(data.length);
+            }
+
+            // Render pagination function (No changes needed, this part is good)
+            function renderPagination(totalItems) {
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                if (totalPages <= 1) return;
+
+                // Previous button
+                pagination.innerHTML += `
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" id="prevPage">&laquo;</a>
+                    </li>
+                `;
+
+                // Page numbers
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                if (startPage > 1) {
+                    pagination.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link page-number" href="#" data-page="1">1</a>
+                        </li>
+                    `;
+                    if (startPage > 2) {
+                        pagination.innerHTML += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    pagination.innerHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link page-number" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `;
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        pagination.innerHTML += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                    }
+                    pagination.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link page-number" href="#" data-page="${totalPages}">${totalPages}</a>
+                        </li>
+                    `;
+                }
+
+                // Next button
+                pagination.innerHTML += `
+                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" id="nextPage">&raquo;</a>
+                    </li>
+                `;
+
+                // Add event listeners
+                document.getElementById('prevPage')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderTable();
+                    }
+                });
+
+                document.getElementById('nextPage')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderTable();
+                    }
+                });
+
+                document.querySelectorAll('.page-number').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentPage = parseInt(link.dataset.page);
+                        renderTable();
+                    });
+                });
+            }
+
+            // Delete strategy function (No changes needed, this part is good assuming backend DELETE is `/api/objection-strategies/:id`)
+            async function deleteStrategy(id) {
+                if (!confirm('Are you sure you want to delete this objection strategy? This action cannot be undone.')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:3000/api/objection-strategies/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        showToast('Objection strategy deleted successfully');
+                        loadData(); // Refresh the data
+                    } else {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Failed to delete objection strategy');
+                    }
+                } catch (error) {
+                    console.error('Error deleting strategy:', error);
+                    showToast(error.message || 'Failed to delete objection strategy', false);
+                }
+            }
+
+            // Search function (Uses `objection_strategy` now)
+            function search() {
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                currentPage = 1;
+
+                if (!term) {
+                    renderTable();
+                    return;
+                }
+
+                const filtered = allObjectionStrategies.filter(strategy =>
+                    (strategy.industry_name && strategy.industry_name.toLowerCase().includes(term)) ||
+                    (strategy.objection_strategy && strategy.objection_strategy.toLowerCase().includes(term)) // Changed to objection_strategy
+                );
+
+                renderTable(filtered);
+            }
+
+            // Event listeners
+            document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+
+            document.getElementById('searchButton').addEventListener('click', search);
+            document.getElementById('searchInput').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    search();
+                }
+            });
+
+            // Load sidebar menu (No changes needed, this part is good)
+            async function loadSidebarMenu() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/menu', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const menuItems = await response.json();
+                        renderSidebarMenu(menuItems);
+                    }
+                } catch (error) {
+                    console.error('Error loading sidebar menu:', error);
+                }
+            }
+            
+            // Render sidebar menu (No changes needed, this part is good)
+            function renderSidebarMenu(menuItems) {
+                const sidebar = document.getElementById('dynamicSidebar');
+                sidebar.innerHTML = '';
+                
+                // Get current page to set active state
+                const currentPage = window.location.pathname.split('/').pop();
+                
+                menuItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'nav-item';
+                    
+                    const a = document.createElement('a');
+                    a.className = `nav-link ${currentPage === item.url ? 'active' : ''}`;
+                    a.href = item.url;
+                    a.innerHTML = `<i class="bi bi-${item.icon} me-2"></i> ${item.name}`;
+                    
+                    li.appendChild(a);
+                    sidebar.appendChild(li);
+                });
+            }
+            
+            // Initial load of data and sidebar
+            Promise.all([loadData(), loadSidebarMenu()])
+                .catch(error => {
+                    console.error('Initialization error:', error);
+                    showToast('Failed to initialize page data.', false);
+                });
+        }
+    </script>
+</body>
+</html>

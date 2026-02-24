@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Strategy Form - Sales Playbook</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --primary-color: #3f51b5;
+            --linkedin-color: #0077b5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+        }
+        .nav-link {
+            color: white !important;
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+        }
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white !important;
+        }
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+            color: white !important;
+        }
+        .nav-link .bi {
+            color: white !important;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+        }
+        .page-title {
+            color: var(--primary-color);
+            margin: 0;
+        }
+        .form-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .ck-editor__editable {
+            min-height: 200px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .linkedin-bg {
+            background-color: var(--linkedin-color);
+            color: white;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+        }
+        .is-invalid {
+            border-color: #dc3545;
+        }
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.875em;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h4 class="mb-4 d-flex align-items-center">
+            <i class="bi bi-book me-2"></i>
+            <span>Sales Playbook</span>
+        </h4>
+        <ul class="nav flex-column" id="dynamicSidebar">
+            <!-- Dynamic menu items will be loaded here -->
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="page-title" id="formTitle">Add New LinkedIn Strategy</h1>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle d-flex align-items-center" type="button" 
+                        id="userDropdown" data-bs-toggle="dropdown">
+                    <div class="user-avatar me-2" id="userAvatar"></div>
+                    <span id="userName"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="logoutBtn">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <form id="strategyForm">
+                <input type="hidden" id="strategyId">
+                <div class="mb-4">
+                    <label for="industrySelect" class="form-label">Industry *</label>
+                    <select class="form-select" id="industrySelect" required>
+                        <option value="">Select Industry</option>
+                    </select>
+                    <div class="invalid-feedback">Please select an industry</div>
+                </div>
+                <div class="mb-4">
+                    <label for="linkedinStrategy" class="form-label">LinkedIn Strategy *</label>
+                    <textarea class="form-control" id="linkedinStrategy"></textarea>
+                    <div class="invalid-feedback">Please provide the strategy content</div>
+                    <small class="text-muted">Enter your detailed LinkedIn outreach strategy</small>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="strategies.html" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn linkedin-bg" id="saveButton">
+                        <span id="saveButtonText">Save Strategy</span>
+                        <span id="saveSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container">
+        <div class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive" aria-atomic="true" id="successToast">
+            <div class="d-flex">
+                <div class="toast-body" id="successToastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="toast align-items-center text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true" id="errorToast">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize toast
+        const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+        const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+
+        function showToast(message, isSuccess = true) {
+            if (isSuccess) {
+                document.getElementById('successToastMessage').textContent = message;
+                successToast.show();
+            } else {
+                document.getElementById('errorToastMessage').textContent = message;
+                errorToast.show();
+            }
+        }
+
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!token || !user || user.role !== 'admin') {
+            window.location.href = 'login.html';
+        } else {
+            // Display user info
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userAvatar').textContent = user.name.charAt(0);
+
+            // Initialize CKEditor
+            let editor;
+
+            ClassicEditor
+                .create(document.getElementById('linkedinStrategy'), {
+                    toolbar: {
+                        items: [
+                            'heading', '|',
+                            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+                            'outdent', 'indent', '|',
+                            'blockQuote', 'insertTable', 'undo', 'redo'
+                        ]
+                    }
+                })
+                .then(createdEditor => {
+                    editor = createdEditor;
+                    loadData();
+                })
+                .catch(error => {
+                    console.error('Error initializing CKEditor:', error);
+                    loadData();
+                });
+
+            // Load data
+            async function loadData() {
+                try {
+                    // Load industries
+                    const industriesResponse = await fetch('http://localhost:3000/api/industries', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (industriesResponse.ok) {
+                        const industries = await industriesResponse.json();
+                        populateIndustryDropdown(industries);
+                    } else {
+                        throw new Error('Failed to load industries');
+                    }
+
+                    // Check if we're editing a strategy
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const strategyId = urlParams.get('id');
+
+                    if (strategyId) {
+                        document.getElementById('formTitle').textContent = 'Edit LinkedIn Strategy';
+                        document.getElementById('saveButtonText').textContent = 'Update Strategy';
+                        await loadStrategy(strategyId);
+                    }
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    showToast(error.message || 'Failed to load required data', false);
+                }
+            }
+
+            // Populate industry dropdown
+            function populateIndustryDropdown(industries) {
+                const dropdown = document.getElementById('industrySelect');
+                dropdown.innerHTML = '<option value="">Select Industry</option>';
+
+                industries.forEach(industry => {
+                    const option = document.createElement('option');
+                    option.value = industry.industry_id;
+                    option.textContent = industry.industry_name;
+                    dropdown.appendChild(option);
+                });
+            }
+
+            // Load strategy data
+            async function loadStrategy(id) {
+                try {
+                    const response = await fetch(`http://localhost:3000/api/strategies/${id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const strategy = await response.json();
+
+                        document.getElementById('strategyId').value = strategy.strategy_id;
+                        document.getElementById('industrySelect').value = strategy.industry_id || '';
+
+                        if (editor) editor.setData(strategy.linkedin_strategy || '');
+                    } else {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Failed to load strategy');
+                    }
+                } catch (error) {
+                    console.error('Error loading strategy:', error);
+                    showToast(error.message || 'Failed to load strategy details', false);
+                }
+            }
+
+            // Form validation
+            function validateForm() {
+                let isValid = true;
+                const requiredFields = [
+                    'industrySelect',
+                    'linkedinStrategy'
+                ];
+
+                requiredFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    const feedback = field.nextElementSibling;
+
+                    if (!field.value || (field.tagName === 'SELECT' && field.value === '')) {
+                        field.classList.add('is-invalid');
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            feedback.style.display = 'block';
+                        }
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            feedback.style.display = 'none';
+                        }
+                    }
+                });
+
+                return isValid;
+            }
+
+            // Form submission handler
+            document.getElementById('strategyForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if (!validateForm()) {
+                    showToast('Please fill in all required fields', false);
+                    return;
+                }
+
+                // Show loading state
+                const saveBtn = document.getElementById('saveButton');
+                const saveText = document.getElementById('saveButtonText');
+                const spinner = document.getElementById('saveSpinner');
+
+                saveText.textContent = 'Saving...';
+                spinner.classList.remove('d-none');
+                saveBtn.disabled = true;
+
+                // Prepare strategy data
+                const strategyId = document.getElementById('strategyId').value;
+                const strategyData = {
+                    industry_id: document.getElementById('industrySelect').value,
+                    linkedin_strategy: editor ? editor.getData() : document.getElementById('linkedinStrategy').value
+                };
+
+                try {
+                    const url = strategyId 
+                        ? `http://localhost:3000/api/strategies/${strategyId}`
+                        : 'http://localhost:3000/api/strategies';
+
+                    const method = strategyId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(strategyData)
+                    });
+
+                    if (response.ok) {
+                        showToast('LinkedIn strategy saved successfully');
+                        setTimeout(() => {
+                            window.location.href = 'strategies.html';
+                        }, 1000);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to save strategy');
+                    }
+                } catch (error) {
+                    console.error('Error saving strategy:', error);
+                    showToast(error.message || 'Failed to save strategy', false);
+
+                    // Reset button state
+                    saveText.textContent = strategyId ? 'Update Strategy' : 'Save Strategy';
+                    spinner.classList.add('d-none');
+                    saveBtn.disabled = false;
+                }
+            });
+
+            // Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+
+            async function loadSidebarMenu() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/menu', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const menuItems = await response.json();
+                        renderSidebarMenu(menuItems);
+                    }
+                } catch (error) {
+                    console.error('Error loading sidebar menu:', error);
+                }
+            }
+
+            function renderSidebarMenu(menuItems) {
+                const sidebar = document.getElementById('dynamicSidebar');
+                sidebar.innerHTML = '';
+
+                const currentPage = window.location.pathname.split('/').pop();
+
+                menuItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'nav-item';
+
+                    const a = document.createElement('a');
+                    a.className = `nav-link ${currentPage === item.url ? 'active' : ''}`;
+                    a.href = item.url;
+                    a.innerHTML = `<i class="bi bi-${item.icon} me-2"></i> ${item.name}`;
+
+                    li.appendChild(a);
+                    sidebar.appendChild(li);
+                });
+            }
+
+            Promise.all([loadData(), loadSidebarMenu()])
+                .catch(error => {
+                    console.error('Initialization error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
